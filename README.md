@@ -9,7 +9,7 @@ The system follows a modular "Agentic RAG" pattern where an intelligent orchestr
 ```mermaid
 graph TD
     User((User)) --> API[FastAPI Endpoint]
-    API --> Agent[Agentic Orchestrator - GPT-4]
+    API --> Agent[Agentic Orchestrator]
     
     subgraph Tools ["Available Tools"]
         T1[kpn_annual_report_search]
@@ -32,8 +32,10 @@ graph TD
     T2 -.-> Agent
     T3 -.-> Agent
     
-    Agent --> Response[Final Synthesized Answer]
-    Response --> User
+    Agent --> GPT[GPT model]
+    GPT --> Agent
+    
+    Agent --> API
 ```
 
 ## 🔄 Core Workflows
