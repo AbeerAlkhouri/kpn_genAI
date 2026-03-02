@@ -1,0 +1,69 @@
+# System Architecture Diagram
+
+This diagram illustrates the flow of a user query through the KPN Intelligent Agent, highlighting the separation between the AI services and the functional tools.
+
+```mermaid
+graph TD
+    %% Styling
+    classDef client fill:#f9f,stroke:#333,stroke-width:2px;
+    classDef api fill:#bbf,stroke:#333,stroke-width:2px;
+    classDef ai fill:#dfd,stroke:#333,stroke-width:2px;
+    classDef tool fill:#ffd,stroke:#333,stroke-width:2px;
+    classDef data fill:#eee,stroke:#333,stroke-dasharray: 5 5;
+
+    %% Components
+    User((User/Client)):::client
+    API[FastAPI Endpoint]:::api
+    
+    subgraph AI_Core ["AI Orchestration Layer"]
+        Orchestrator[Agentic Orchestrator - GPT-4]:::ai
+        Embeddings[Azure OpenAI Embeddings]:::ai
+    end
+
+    subgraph Tool_Layer ["Intelligent Toolset"]
+        RAG[kpn_annual_report_search]:::tool
+        Products[kpn_products_tool]:::tool
+        News[kpn_news_tool]:::tool
+    end
+
+    subgraph Knowledge_Data ["Data Sources"]
+        FAISS[(FAISS Vector DB)]:::data
+        Docs[Local Documents - PDF/DOCX]:::data
+        Static[Internal Product Knowledge]:::data
+        Web[KPN News Website]:::data
+    end
+
+    %% Connections
+    User -->|Query| API
+    API -->|Input| Orchestrator
+    
+    Orchestrator -->|Calls| RAG
+    Orchestrator -->|Calls| Products
+    Orchestrator -->|Calls| News
+    
+    RAG -->|Similarity Search| Embeddings
+    Embeddings -->|Vector| FAISS
+    FAISS -.->|Context| RAG
+    Docs -->|Ingestion| FAISS
+    
+    Products -->|Retrieve| Static
+    News -->|Scrape| Web
+    
+    RAG -.->|Retrieved Data| Orchestrator
+    Products -.->|Product Info| Orchestrator
+    News -.->|Latest Headlines| Orchestrator
+    
+    Orchestrator -->|Final Answer| API
+    API -->|Synthesis| User
+
+    %% Subgraph Styling
+    style AI_Core fill:#f0fff0,stroke:#2e8b57
+    style Tool_Layer fill:#fffaf0,stroke:#daa520
+    style Knowledge_Data fill:#f8f8f8,stroke:#808080
+```
+
+### Flow Highlights for Demo:
+1. **User Interaction**: Query enters via a professional REST API.
+2. **AI Service Separation**: The "Brain" (GPT-4) resides in the AI Core, separate from the execution logic of the tools.
+3. **Embeddings**: Used specifically for the RAG pipeline to ensure semantic accuracy when searching local KPN documents.
+4. **Tool Decoupling**: Tools are independent Python modules that can be updated or expanded without touching the core AI logic.
